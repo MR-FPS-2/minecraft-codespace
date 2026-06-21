@@ -1,13 +1,13 @@
-# 🎮 Minecraft Forge Server on GitHub Codespaces
+# 🎮 Minecraft Fabric Server on GitHub Codespaces
 
-> Free **modded** Minecraft Java server (Forge) with a real IP:PORT — no VPS, no credit card.  
+> Free **modded** Minecraft Java server (Fabric) with a real IP:PORT — no VPS, no credit card.  
 > World and mods are version-controlled in this repo, so you can blow away the Codespace anytime and pick up where you left off.
 
 ---
 
 ## ✨ What This Does
 
-- Installs a **Forge** modded server — Minecraft **26.1.2** by default
+- Installs a **Fabric** modded server — Minecraft **26.1.2** by default
 - Exposes it to the internet via **playit.gg** (real IP:PORT for friends to connect)
 - **Saves your world + mods to this GitHub repo** (manually with `save.sh`, or automatically every 30 min)
 - **Restores everything** on a brand-new Codespace with `import.sh`
@@ -36,7 +36,7 @@ Click **Fork** at the top of this page.
 
 ### Step 3 — Add mods *(optional, before first start)*
 
-Drop any `.jar` mod files into the `mods/` folder. You can also add them later and just restart the server.
+Drop any `.jar` mod files into the `mods/` folder. Most mods also need **Fabric API** — download it from [modrinth.com/mod/fabric-api](https://modrinth.com/mod/fabric-api) (pick the build matching Minecraft 26.1.2) and drop it in `mods/` too.
 
 ### Step 4 — Run the server
 
@@ -45,8 +45,7 @@ bash start.sh
 ```
 
 This automatically:
-- Resolves and downloads the latest Forge build for Minecraft 26.1.2
-- Installs the Forge server (~150–300MB of libraries, first run only)
+- Resolves and downloads the latest Fabric loader for Minecraft 26.1.2
 - Loads any mods from `mods/`
 - Downloads `playit-cli` + `playitd`
 - Starts the server and waits for it to fully load
@@ -76,7 +75,7 @@ abc123.mc.playit.gg:12345   ← share this with friends
 
 **Multiplayer** → **Add Server** → paste the address → **Join Server**
 
-> ⚠️ Friends need the **same mods installed** in their Minecraft launcher (matching Forge + mod versions) to join a modded server.
+> ⚠️ Friends need the **same mods installed** in their Minecraft launcher (matching Fabric loader + mod versions) to join a modded server.
 
 ---
 
@@ -136,11 +135,7 @@ If you want to start completely clean with **nothing** left in repo history:
 1. On GitHub, go to your forked repo → **Settings** → scroll to **Danger Zone** → **Delete this repository**
 2. Fork the original repo again — you get a 100% clean copy with zero history
 
-This is the only way to guarantee old map data isn't recoverable from git history.
-
 ### Option B — Keep the repo, reset history with an orphan branch
-
-This keeps your repo URL but wipes all commit history:
 
 ```bash
 git checkout --orphan clean-slate
@@ -173,7 +168,7 @@ Restart with `bash start.sh` after editing.
 
 ---
 
-## 🔧 Changing the Minecraft/Forge Version
+## 🔧 Changing the Minecraft Version
 
 Open `start.sh` and edit the line near the top:
 
@@ -181,10 +176,10 @@ Open `start.sh` and edit the line near the top:
 MC_VERSION="26.1.2"   # ← change this
 ```
 
-Set it to any version listed at [files.minecraftforge.net](https://files.minecraftforge.net/), e.g. `MC_VERSION="1.21.11"`. The script automatically resolves and installs the latest Forge build for whichever version you set. Delete `run.sh` and `libraries/` first if you're switching from an already-installed version:
+Set it to any version Fabric supports (check [fabricmc.net](https://fabricmc.net/)), e.g. `MC_VERSION="1.21.11"`. The script automatically resolves and downloads the latest Fabric loader for whichever version you set. Delete the old server jar first if you're switching versions:
 
 ```bash
-rm -rf run.sh libraries
+rm -f fabric-server.jar
 bash start.sh
 ```
 
@@ -196,7 +191,7 @@ bash start.sh
 2. Restart: `bash start.sh`
 3. Save the change: `bash save.sh`
 
-> Make sure mods match your Forge **Minecraft version** (26.1.2 by default) — mixing versions will crash the server. Check each mod's page (CurseForge/Modrinth) for the supported version before downloading.
+> Make sure mods match your **Fabric Minecraft version** (26.1.2 by default) and are built for **Fabric**, not Forge/NeoForge — they're not interchangeable. [Modrinth](https://modrinth.com) and [CurseForge](https://www.curseforge.com/minecraft/mc-mods) both let you filter by "Fabric" and by version. Almost every modpack needs **Fabric API** installed alongside other mods.
 
 ---
 
@@ -220,7 +215,7 @@ bash start.sh
 minecraft-codespace/
 ├── .devcontainer/
 │   └── devcontainer.json   ← Java 25 + jq environment
-├── start.sh                ← Installs Forge, starts server + tunnel + auto-save
+├── start.sh                ← Installs Fabric, starts server + tunnel + auto-save
 ├── save.sh                 ← Archives & pushes world + mods to GitHub
 ├── import.sh                ← Restores world + mods on a fresh Codespace
 ├── .gitignore               ← Keeps regenerable files out of git
@@ -237,9 +232,9 @@ minecraft-codespace/
 
 *Auto-generated locally, not committed (regenerated by start.sh):*
 ```
-├── forge-installer.jar
-├── libraries/                ← Forge + Minecraft libraries
-├── run.sh / user_jvm_args.txt
+├── fabric-server.jar         ← Fabric server executable
+├── .fabric/                  ← Fabric loader cache
+├── logs/
 ├── playit-cli / playitd
 └── world/                    ← Live world (archived into world.tar.gz by save.sh)
 ```
@@ -268,9 +263,9 @@ sleep 3
 **Push failing (file too large)?**  
 GitHub rejects files over 100MB. If `world.tar.gz` grows past that, consider [Git LFS](https://git-lfs.com/) for it.
 
-**Server crashes right after a mod is added?**  
-Check `logs/latest.log` — usually a mod version mismatch with `MC_VERSION` in `start.sh`.
+**Server crashes right after adding a mod?**  
+Check `logs/latest.log` — usually means the mod is for a different Minecraft version, or it's a Forge/NeoForge mod instead of a Fabric one, or **Fabric API** is missing from `mods/`.
 
 ---
 
-> Free forever · Powered by GitHub Codespaces + Forge + playit.gg
+> Free forever · Powered by GitHub Codespaces + Fabric + playit.gg
