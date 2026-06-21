@@ -9,16 +9,13 @@ NC='\033[0m'
 echo -e "${CYAN}💾 Saving world + mods to GitHub...${NC}"
 
 # ===== Ensure .gitignore is set up =====
-if [ ! -f .gitignore ] || ! grep -q "^libraries/" .gitignore 2>/dev/null; then
+if [ ! -f .gitignore ] || ! grep -q "^fabric-server.jar" .gitignore 2>/dev/null; then
     cat > .gitignore << 'EOF'
-forge-installer.jar
-libraries/
+fabric-server.jar
+.fabric/
 logs/
 crash-reports/
 *.log
-run.sh
-run.bat
-user_jvm_args.txt
 playit-cli
 playitd
 playit.sock
