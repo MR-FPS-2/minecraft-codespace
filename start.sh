@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ===== Configuration =====
-MC_VERSION="26.1.2"   # ← Minecraft version. Change this to switch Forge/MC versions.
+MC_VERSION="26.1.2"   # ← Minecraft version. Change this to switch versions.
 # ==========================
 
 # ===== Colors =====
@@ -15,8 +15,8 @@ NC='\033[0m'
 clear
 echo -e "${CYAN}"
 echo "╔══════════════════════════════════════════════╗"
-echo "║  🎮  Minecraft Forge Server - Codespaces     ║"
-echo "║      Minecraft ${MC_VERSION} (Forge)              ║"
+echo "║  🎮  Minecraft Fabric Server - Codespaces    ║"
+echo "║      Minecraft ${MC_VERSION} (Fabric)             ║"
 echo "╚══════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -36,46 +36,40 @@ is_valid_binary() {
     [ -f "$f" ] && [ "$size" -gt "$min_size" ]
 }
 
-# ===== Install Forge server (only if not already installed) =====
-if [ -f "run.sh" ] && [ -d "libraries" ]; then
-    echo -e "${GREEN}[✓] Forge server already installed${NC}"
+# ===== Install Fabric server (only if not already installed) =====
+if is_valid_binary "fabric-server.jar" 500000; then
+    echo -e "${GREEN}[✓] Fabric server already installed${NC}"
 else
-    echo -e "${YELLOW}[+] Resolving latest Forge build for Minecraft ${MC_VERSION}...${NC}"
+    echo -e "${YELLOW}[+] Resolving latest Fabric loader for Minecraft ${MC_VERSION}...${NC}"
 
-    FORGE_BUILD=$(curl -sf "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json" \
-        | jq -r --arg v "$MC_VERSION" '.promos[$v + "-latest"] // empty')
+    LOADER_VERSION=$(curl -sf "https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}" \
+        | jq -r '.[0].loader.version // empty')
 
-    if [ -z "$FORGE_BUILD" ]; then
-        echo -e "${RED}[✗] Could not resolve a Forge build for MC ${MC_VERSION}.${NC}"
-        echo -e "${YELLOW}    Check available versions at https://files.minecraftforge.net/${NC}"
+    if [ -z "$LOADER_VERSION" ]; then
+        echo -e "${RED}[✗] No Fabric loader found for MC ${MC_VERSION}.${NC}"
+        echo -e "${YELLOW}    Check supported versions at https://fabricmc.net/${NC}"
         exit 1
     fi
+    echo -e "${GREEN}[✓] Fabric loader ${LOADER_VERSION}${NC}"
 
-    FORGE_FULL="${MC_VERSION}-${FORGE_BUILD}"
-    echo -e "${GREEN}[✓] Forge ${FORGE_FULL}${NC}"
+    INSTALLER_VERSION=$(curl -sf "https://meta.fabricmc.net/v2/versions/installer" \
+        | jq -r '.[0].version // empty')
 
-    INSTALLER_URL="https://maven.minecraftforge.net/net/minecraftforge/forge/${FORGE_FULL}/forge-${FORGE_FULL}-installer.jar"
-    echo -e "${YELLOW}[+] Downloading Forge installer...${NC}"
-    curl -L "$INSTALLER_URL" -o forge-installer.jar --progress-bar
-
-    if ! is_valid_binary "forge-installer.jar" 500000; then
-        echo -e "${RED}[✗] Forge installer download failed!${NC}"
+    if [ -z "$INSTALLER_VERSION" ]; then
+        echo -e "${RED}[✗] Could not resolve Fabric installer version.${NC}"
         exit 1
     fi
+    echo -e "${GREEN}[✓] Fabric installer ${INSTALLER_VERSION}${NC}"
 
-    echo -e "${YELLOW}[+] Installing Forge server (downloads ~150-300MB of libraries, please wait)...${NC}"
-    java -jar forge-installer.jar --installServer
+    SERVER_JAR_URL="https://meta.fabricmc.net/v2/versions/loader/${MC_VERSION}/${LOADER_VERSION}/${INSTALLER_VERSION}/server/jar"
+    echo -e "${YELLOW}[+] Downloading Fabric server jar...${NC}"
+    curl -L "$SERVER_JAR_URL" -o fabric-server.jar --progress-bar
 
-    if [ ! -f "run.sh" ]; then
-        echo -e "${RED}[✗] Forge installation failed — run.sh was not created.${NC}"
+    if ! is_valid_binary "fabric-server.jar" 500000; then
+        echo -e "${RED}[✗] Fabric server download failed!${NC}"
         exit 1
     fi
-    chmod +x run.sh
-
-    # Set sane default memory args (Codespace default machine: 2-core/8GB)
-    printf '%s\n' "-Xmx2G" "-Xms1G" > user_jvm_args.txt
-
-    echo -e "${GREEN}[✓] Forge server installed${NC}"
+    echo -e "${GREEN}[✓] Fabric server installed ($(du -sh fabric-server.jar | cut -f1))${NC}"
 fi
 
 # ===== Accept EULA =====
@@ -92,7 +86,7 @@ difficulty=normal
 gamemode=survival
 level-seed=
 level-name=world
-motd=\u00A7a\u00A7lMy Codespace Forge Server
+motd=\u00A7a\u00A7lMy Codespace Fabric Server
 pvp=true
 allow-flight=true
 spawn-protection=16
@@ -112,6 +106,7 @@ mkdir -p mods
 MOD_COUNT=$(find mods -maxdepth 1 -name "*.jar" 2>/dev/null | wc -l)
 if [ "$MOD_COUNT" -eq 0 ]; then
     echo -e "${YELLOW}[i] No mods in mods/ — drop .jar files there and restart to load them.${NC}"
+    echo -e "${YELLOW}    Most mods also need Fabric API — grab it from modrinth.com/mod/fabric-api${NC}"
 else
     echo -e "${GREEN}[✓] ${MOD_COUNT} mod(s) loaded from mods/${NC}"
 fi
@@ -147,13 +142,13 @@ if [ -f mc.pid ] && kill -0 "$(cat mc.pid)" 2>/dev/null; then
 fi
 rm -f world/session.lock
 
-echo -e "${YELLOW}[+] Starting Forge server...${NC}"
-bash run.sh nogui &
+echo -e "${YELLOW}[+] Starting Fabric server...${NC}"
+java -Xmx2G -Xms1G -jar fabric-server.jar nogui &
 MC_PID=$!
 echo "$MC_PID" > mc.pid
 
-echo -e "${YELLOW}[⏳] Waiting for server to fully start (mods can take a few minutes)...${NC}"
-TIMEOUT=300
+echo -e "${YELLOW}[⏳] Waiting for server to fully start...${NC}"
+TIMEOUT=180
 ELAPSED=0
 STARTED=false
 while [ $ELAPSED -lt $TIMEOUT ]; do
