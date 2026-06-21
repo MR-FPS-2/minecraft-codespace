@@ -1,10 +1,27 @@
+# Regenerable server binaries
 fabric-server.jar
+*-installer.jar
+*-installer.jar.log
+
+# Forge / NeoForge generated server files
+libraries/
+run.sh
+run.bat
+user_jvm_args.txt
+
+# Fabric loader cache
 .fabric/
+
+# Logs & crash reports
 logs/
 crash-reports/
 *.log
+
+# playit.gg
 playit-cli
 playitd
 playit.sock
+
+# Runtime (world is committed as world.tar.gz instead)
 mc.pid
-world/session.lock
+world/
