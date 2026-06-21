@@ -8,13 +8,20 @@ NC='\033[0m'
 
 clear
 echo -e "${CYAN}"
-echo "╔══════════════════════════════════════════════╗"
-echo "║   📥  Importing World + Mods from GitHub     ║"
-echo "╚══════════════════════════════════════════════╝"
+echo "+--------------------------------------------+"
+echo "|   📥  Importing World + Mods from GitHub   |"
+echo "+--------------------------------------------+"
 echo -e "${NC}"
 
 echo -e "${YELLOW}[+] Pulling latest data from GitHub...${NC}"
 git pull
+
+# ===== Show saved mod loader =====
+if [ -f .loader ]; then
+    echo -e "${GREEN}[✓] Saved mod loader: $(tr -d '[:space:]' < .loader)${NC}"
+else
+    echo -e "${YELLOW}[i] No .loader saved yet — start.sh will ask you to pick one (Fabric/Forge/NeoForge).${NC}"
+fi
 
 # ===== Restore world =====
 if [ -f world.tar.gz ]; then
@@ -42,7 +49,7 @@ else
 fi
 
 echo ""
-echo -e "${CYAN}══════════════════════════════════════${NC}"
+echo -e "${CYAN}=====================================${NC}"
 echo -e "${GREEN}[✓] Import complete!${NC}"
 echo -e "${YELLOW}    Now run: bash start.sh${NC}"
-echo -e "${CYAN}══════════════════════════════════════${NC}"
+echo -e "${CYAN}=====================================${NC}"
