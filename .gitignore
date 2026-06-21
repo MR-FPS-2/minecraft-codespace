@@ -1,11 +1,8 @@
-forge-installer.jar
-libraries/
+fabric-server.jar
+.fabric/
 logs/
 crash-reports/
 *.log
-run.sh
-run.bat
-user_jvm_args.txt
 playit-cli
 playitd
 playit.sock
