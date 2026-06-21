@@ -11,16 +11,33 @@ echo -e "${CYAN}💾 Saving world + mods to GitHub...${NC}"
 # ===== Ensure .gitignore is set up =====
 if [ ! -f .gitignore ] || ! grep -q "^fabric-server.jar" .gitignore 2>/dev/null; then
     cat > .gitignore << 'EOF'
+# Regenerable server binaries
 fabric-server.jar
+*-installer.jar
+*-installer.jar.log
+
+# Forge / NeoForge generated server files
+libraries/
+run.sh
+run.bat
+user_jvm_args.txt
+
+# Fabric loader cache
 .fabric/
+
+# Logs & crash reports
 logs/
 crash-reports/
 *.log
+
+# playit.gg
 playit-cli
 playitd
 playit.sock
+
+# Runtime (world is committed as world.tar.gz instead)
 mc.pid
-world/session.lock
+world/
 EOF
     echo -e "${GREEN}[✓] .gitignore set up${NC}"
 fi
@@ -35,7 +52,9 @@ else
 fi
 
 # ===== Stage everything important =====
+# .loader is committed so a fresh Codespace remembers your chosen mod loader.
 git add world.tar.gz \
+        .loader \
         mods/ \
         server.properties \
         eula.txt \
